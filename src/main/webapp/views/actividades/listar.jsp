@@ -53,6 +53,14 @@
             </button>
         </div>
 
+        <!-- Barra de búsqueda -->
+        <div style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <div style="position:relative; flex:1; max-width:400px;">
+                <svg style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#9ca3af;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="buscarActividad" placeholder="Buscar por nombre de actividad..." oninput="filtrarActividades()" style="width:100%; padding:0.6rem 0.75rem 0.6rem 2.5rem; border:1px solid #e5e7eb; border-radius:8px; font-size:0.9rem; font-family:'Inter',sans-serif; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#e5e7eb'">
+            </div>
+        </div>
+
         <!-- Tabla -->
         <div class="actividades-table">
             <table>
@@ -70,7 +78,8 @@
                 <tbody id="actividades-tbody">
                     <% if (!actividades.isEmpty()) {
                         for (Actividad a : actividades) { %>
-                        <tr class="actividad-row" data-id="<%= a.getIdActividad() %>">
+                        <tr class="actividad-row" data-id="<%= a.getIdActividad() %>"
+                            data-nombre="<%= a.getNombre() != null ? a.getNombre() : "" %>">
                             <td>
                                 <div class="actividad-nombre">
                                     <strong><%= a.getNombre() %></strong>

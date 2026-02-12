@@ -6,6 +6,23 @@ let modoEdicion = false;
 let paginaActualAct = 1;
 const registrosPorPaginaAct = 6;
 
+// === BÚSQUEDA POR NOMBRE DE ACTIVIDAD ===
+function filtrarActividades() {
+    const texto = document.getElementById('buscarActividad').value.trim().toLowerCase();
+    const tbody = document.getElementById('actividades-tbody');
+    if (!tbody) return;
+
+    const filas = Array.from(tbody.querySelectorAll('tr.actividad-row'));
+    filas.forEach(fila => {
+        const nombre = (fila.getAttribute('data-nombre') || '').toLowerCase();
+        const coincide = !texto || nombre.includes(texto);
+        fila.classList.toggle('filtrado-oculto', !coincide);
+    });
+
+    paginaActualAct = 1;
+    aplicarPaginacionAct();
+}
+
 // ── ABRIR MODAL CREAR ──────────────────────────
 function abrirModalCrear() {
     modoEdicion = false;
@@ -166,6 +183,7 @@ function cargarActividades() {
                     const fila = document.createElement('tr');
                     fila.className = 'actividad-row';
                     fila.dataset.id = a.idActividad;
+                    fila.dataset.nombre = a.nombre || '';
                     fila.innerHTML = `
                         <td>
                             <div class="actividad-nombre">
@@ -209,7 +227,9 @@ function aplicarPaginacionAct() {
     const tbody = document.getElementById('actividades-tbody');
     if (!tbody) return;
 
-    const filas = Array.from(tbody.querySelectorAll('tr.actividad-row'));
+    const filas = Array.from(tbody.querySelectorAll('tr.actividad-row:not(.filtrado-oculto)'));
+    tbody.querySelectorAll('tr.actividad-row.filtrado-oculto').forEach(f => f.style.display = 'none');
+
     const total = filas.length;
     const totalPaginas = Math.ceil(total / registrosPorPaginaAct) || 1;
 

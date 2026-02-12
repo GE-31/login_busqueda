@@ -3,6 +3,25 @@ let modoEdicion = false;
 let paginaActualVol = 1;
 const registrosPorPaginaVol = 5;
 
+// === BÚSQUEDA POR NOMBRE/APELLIDO ===
+function filtrarVoluntarios() {
+    const texto = document.getElementById('buscarVoluntario').value.trim().toLowerCase();
+    const tbody = document.getElementById('voluntarios-tbody');
+    if (!tbody) return;
+
+    const filas = Array.from(tbody.querySelectorAll('tr.voluntario-row'));
+
+    filas.forEach(fila => {
+        const nombres = (fila.getAttribute('data-nombres') || '').toLowerCase();
+        const apellidos = (fila.getAttribute('data-apellidos') || '').toLowerCase();
+        const coincide = !texto || nombres.includes(texto) || apellidos.includes(texto);
+        fila.classList.toggle('filtrado-oculto', !coincide);
+    });
+
+    paginaActualVol = 1;
+    aplicarPaginacionVol();
+}
+
 // Abrir modal para crear voluntario
 function abrirModalCrear() {
     modoEdicion = false;
@@ -245,7 +264,10 @@ function aplicarPaginacionVol() {
     const tbody = document.getElementById('voluntarios-tbody');
     if (!tbody) return;
 
-    const filas = Array.from(tbody.querySelectorAll('tr.voluntario-row'));
+    const filas = Array.from(tbody.querySelectorAll('tr.voluntario-row:not(.filtrado-oculto)'));
+    // Ocultar filas filtradas explícitamente
+    tbody.querySelectorAll('tr.voluntario-row.filtrado-oculto').forEach(f => f.style.display = 'none');
+
     const totalRegistros = filas.length;
     const totalPaginas = Math.ceil(totalRegistros / registrosPorPaginaVol) || 1;
 

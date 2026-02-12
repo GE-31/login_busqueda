@@ -6,6 +6,22 @@ let modal = document.getElementById("modalDonacion");
 let form = document.getElementById("formDonacion");
 let editingId = null;
 
+// === BÚSQUEDA POR DESCRIPCIÓN/ACTIVIDAD ===
+function filtrarDonaciones() {
+    const texto = document.getElementById('buscarDonacion').value.trim().toLowerCase();
+    const tbody = document.getElementById('tbodyDonaciones');
+    if (!tbody) return;
+
+    const filas = Array.from(tbody.querySelectorAll('tr'));
+    filas.forEach(fila => {
+        const celdas = fila.querySelectorAll('td');
+        if (celdas.length < 4) return; // skip no-data row
+        const textoFila = Array.from(celdas).map(td => td.textContent.toLowerCase()).join(' ');
+        const coincide = !texto || textoFila.includes(texto);
+        fila.style.display = coincide ? '' : 'none';
+    });
+}
+
 // ====================== CARGAR ACTIVIDADES ======================
 async function cargarActividades() {
     try {

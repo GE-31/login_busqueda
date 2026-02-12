@@ -10,16 +10,17 @@
 (function () {
     'use strict';
 
-    const SESSION_TIMEOUT_MS = 20 * 60 * 1000;     // 20 minutos
-    const WARNING_BEFORE_MS = 2 * 60 * 1000;        // Advertir 2 min antes
-    const RENEW_DEBOUNCE_MS = 60 * 1000;             // Renovar máximo cada 1 minuto
-    const CHECK_INTERVAL_MS = 30 * 1000;             // Verificar cada 30 segundos
+    const SESSION_TIMEOUT_MS = 20 * 60 * 1000;        // 20 minutos
+    const WARNING_BEFORE_MS = 1 * 60 * 1000;          // Advertir 1 min antes (a los 19 min)
+    const RENEW_DEBOUNCE_MS = 60 * 1000;              // Renovar máximo cada 1 minuto
+    const CHECK_INTERVAL_MS = 10 * 1000;              // Verificar cada 10 segundos
 
     let lastActivity = Date.now();
     let lastRenew = 0;
     let warningShown = false;
     let sessionExpired = false;
     let warningModal = null;
+    let countdownInterval = null;
 
     /**
      * Obtiene el contextPath del sistema.
@@ -41,8 +42,12 @@
 
         lastActivity = Date.now();
 
-        // Ocultar advertencia si estaba visible
+        // Ocultar advertencia y detener cuenta regresiva
         if (warningShown) {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
             ocultarAdvertencia();
         }
 
@@ -53,7 +58,7 @@
             renovarSesion();
         }
     }
-
+ 
     /**
      * Llama al endpoint de renovación de sesión.
      */
@@ -92,25 +97,35 @@
             return;
         }
 
-        // Si quedan menos de 2 minutos → mostrar advertencia
+        // Si queda poco tiempo → mostrar advertencia
         if (tiempoInactivo >= (SESSION_TIMEOUT_MS - WARNING_BEFORE_MS) && !warningShown) {
-            const minutosRestantes = Math.ceil((SESSION_TIMEOUT_MS - tiempoInactivo) / 60000);
-            mostrarAdvertencia(minutosRestantes);
+            const segundosRestantes = Math.ceil((SESSION_TIMEOUT_MS - tiempoInactivo) / 1000);
+            mostrarAdvertencia(segundosRestantes);
         }
     }
 
     /**
      * Maneja la expiración de la sesión.
+     * Llama al endpoint /logout para eliminar la cookie AUTH_TOKEN,
+     * invalidar la sesión HTTP y redirigir al login.
      */
     function manejarExpiracion() {
         sessionExpired = true;
         const contextPath = getContextPath();
 
-        // Mostrar mensaje y redirigir
-        if (warningModal) {
-            warningModal.remove();
+        // Detener cuenta regresiva si estaba activa
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
         }
 
+        // Ocultar advertencia si estaba visible
+        if (warningModal) {
+            warningModal.remove();
+            warningModal = null;
+        }
+
+        // Mostrar modal de sesión expirada
         const modal = document.createElement('div');
         modal.id = 'session-expired-modal';
         modal.innerHTML = 
@@ -131,32 +146,64 @@
 
         document.body.appendChild(modal);
 
-        // Redirigir automáticamente después de 3 segundos
-        setTimeout(function () {
-            window.location.href = contextPath + '/login';
-        }, 3000);
+        // Llamar al endpoint /logout para eliminar cookie y cerrar sesión en el servidor
+        fetch(contextPath + '/logout', {
+            method: 'GET',
+            credentials: 'same-origin'
+        }).finally(function () {
+            // Redirigir automáticamente después de 3 segundos
+            setTimeout(function () {
+                window.location.href = contextPath + '/login';
+            }, 3000);
+        });
     }
 
     /**
-     * Muestra la advertencia de que la sesión está por expirar.
+     * Muestra la advertencia con cuenta regresiva en tiempo real.
      */
-    function mostrarAdvertencia(minutosRestantes) {
+    function mostrarAdvertencia(segundosRestantes) {
         warningShown = true;
 
         warningModal = document.createElement('div');
         warningModal.id = 'session-warning-modal';
-        warningModal.innerHTML = 
-            '<div style="position:fixed;top:20px;right:20px;z-index:99998;' +
+        warningModal.innerHTML = generarHTMLAdvertencia(segundosRestantes);
+        document.body.appendChild(warningModal);
+
+        // Cuenta regresiva actualizada cada segundo
+        var segsRestantes = segundosRestantes;
+        countdownInterval = setInterval(function () {
+            segsRestantes--;
+            if (segsRestantes <= 0 || sessionExpired) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                return;
+            }
+            if (warningModal) {
+                warningModal.innerHTML = generarHTMLAdvertencia(segsRestantes);
+            }
+        }, 1000);
+    }
+
+    /**
+     * Genera el HTML de la advertencia con los segundos restantes.
+     */
+    function generarHTMLAdvertencia(segundos) {
+        var texto;
+        if (segundos >= 60) {
+            var minutos = Math.ceil(segundos / 60);
+            texto = minutos + ' minuto' + (minutos > 1 ? 's' : '');
+        } else {
+            texto = segundos + ' segundo' + (segundos > 1 ? 's' : '');
+        }
+        return '<div style="position:fixed;top:20px;right:20px;z-index:99998;' +
             'background:#fff3cd;border:1px solid #ffc107;border-radius:10px;' +
             'padding:16px 20px;max-width:320px;box-shadow:0 4px 12px rgba(0,0,0,0.15);' +
             'display:flex;align-items:center;gap:12px;">' +
             '<span style="font-size:24px;">⚠️</span>' +
             '<div><strong style="color:#856404;font-size:14px;">Sesión por expirar</strong>' +
             '<p style="margin:4px 0 0;color:#856404;font-size:13px;">' +
-            'Tu sesión expirará en ' + minutosRestantes + ' minuto(s) por inactividad. ' +
+            'Tu sesión expirará en <strong>' + texto + '</strong> por inactividad. ' +
             'Realiza cualquier acción para mantenerla activa.</p></div></div>';
-
-        document.body.appendChild(warningModal);
     }
 
     /**

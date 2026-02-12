@@ -27,7 +27,6 @@ public class JwtUtil {
 
     // Tiempo de expiración: 20 minutos en milisegundos
     public static final long EXPIRATION_TIME_MS = 20 * 60 * 1000;
-
     // Nombre de la cookie
     public static final String COOKIE_NAME = "AUTH_TOKEN";
 

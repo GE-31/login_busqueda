@@ -53,6 +53,14 @@
             </button>
         </div>
 
+        <!-- Barra de búsqueda -->
+        <div style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <div style="position:relative; flex:1; max-width:400px;">
+                <svg style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#9ca3af;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="buscarBeneficiario" placeholder="Buscar por nombre o apellido..." oninput="filtrarBeneficiarios()" style="width:100%; padding:0.6rem 0.75rem 0.6rem 2.5rem; border:1px solid #e5e7eb; border-radius:8px; font-size:0.9rem; font-family:'Inter',sans-serif; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='#e85d75'" onblur="this.style.borderColor='#e5e7eb'">
+            </div>
+        </div>
+
         <!-- Tabla -->
         <div class="beneficiarios-table">
             <table>
@@ -71,7 +79,9 @@
                 <tbody id="beneficiarios-tbody">
                     <% if (!beneficiarios.isEmpty()) {
                         for (Beneficiario b : beneficiarios) { %>
-                        <tr class="beneficiario-row" data-id="<%= b.getIdBeneficiario() %>">
+                        <tr class="beneficiario-row" data-id="<%= b.getIdBeneficiario() %>"
+                            data-nombres="<%= b.getNombres() != null ? b.getNombres() : "" %>"
+                            data-apellidos="<%= b.getApellidos() != null ? b.getApellidos() : "" %>">
                             <td>
                                 <div class="beneficiario-nombre">
                                     <strong><%= b.getNombres() %> <%= b.getApellidos() %></strong>

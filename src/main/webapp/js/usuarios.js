@@ -3,6 +3,25 @@ let modoEdicion = false;
 let paginaActualUsr = 1;
 const registrosPorPaginaUsr = 5;
 
+// === BÚSQUEDA POR NOMBRE/APELLIDO ===
+function filtrarUsuarios() {
+    const texto = document.getElementById('buscarUsuario').value.trim().toLowerCase();
+    const tbody = document.getElementById('usuarios-tbody');
+    if (!tbody) return;
+
+    const filas = Array.from(tbody.querySelectorAll('tr.usuario-row'));
+
+    filas.forEach(fila => {
+        const nombres = (fila.getAttribute('data-nombres') || '').toLowerCase();
+        const apellidos = (fila.getAttribute('data-apellidos') || '').toLowerCase();
+        const coincide = !texto || nombres.includes(texto) || apellidos.includes(texto);
+        fila.classList.toggle('filtrado-oculto', !coincide);
+    });
+
+    paginaActualUsr = 1;
+    aplicarPaginacionUsr();
+}
+
 // Abrir modal para crear usuario
 function abrirModalCrear() {
     modoEdicion = false;
@@ -273,7 +292,10 @@ function aplicarPaginacionUsr() {
     const tbody = document.getElementById('usuarios-tbody');
     if (!tbody) return;
 
-    const filas = Array.from(tbody.querySelectorAll('tr.usuario-row'));
+    const filas = Array.from(tbody.querySelectorAll('tr.usuario-row:not(.filtrado-oculto)'));
+    // Ocultar filas filtradas explícitamente
+    tbody.querySelectorAll('tr.usuario-row.filtrado-oculto').forEach(f => f.style.display = 'none');
+
     const totalRegistros = filas.length;
     const totalPaginas = Math.ceil(totalRegistros / registrosPorPaginaUsr) || 1;
 

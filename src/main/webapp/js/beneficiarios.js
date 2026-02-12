@@ -6,6 +6,24 @@ let modoEdicion = false;
 let paginaActualBen = 1;
 const registrosPorPaginaBen = 6;
 
+// === BÚSQUEDA POR NOMBRE/APELLIDO ===
+function filtrarBeneficiarios() {
+    const texto = document.getElementById('buscarBeneficiario').value.trim().toLowerCase();
+    const tbody = document.getElementById('beneficiarios-tbody');
+    if (!tbody) return;
+
+    const filas = Array.from(tbody.querySelectorAll('tr.beneficiario-row'));
+    filas.forEach(fila => {
+        const nombres = (fila.getAttribute('data-nombres') || '').toLowerCase();
+        const apellidos = (fila.getAttribute('data-apellidos') || '').toLowerCase();
+        const coincide = !texto || nombres.includes(texto) || apellidos.includes(texto);
+        fila.classList.toggle('filtrado-oculto', !coincide);
+    });
+
+    paginaActualBen = 1;
+    aplicarPaginacionBen();
+}
+
 // ── ABRIR MODAL CREAR ──────────────────────────
 function abrirModalCrear() {
     modoEdicion = false;
@@ -332,7 +350,9 @@ function aplicarPaginacionBen() {
     const tbody = document.getElementById('beneficiarios-tbody');
     if (!tbody) return;
 
-    const filas = Array.from(tbody.querySelectorAll('tr.beneficiario-row'));
+    const filas = Array.from(tbody.querySelectorAll('tr.beneficiario-row:not(.filtrado-oculto)'));
+    tbody.querySelectorAll('tr.beneficiario-row.filtrado-oculto').forEach(f => f.style.display = 'none');
+
     const total = filas.length;
     const totalPaginas = Math.ceil(total / registrosPorPaginaBen) || 1;
 
